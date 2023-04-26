@@ -1,0 +1,56 @@
+<html>
+    <head>
+        <script type='text/javascript' src='knockout-3.5.1.js'></script>
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    </head>
+    <body>
+
+
+
+
+        <!-- <p>First name: <input data-bind="value: firstName" /></p>
+        <p>Last name: <input data-bind="value: lastName" /></p> -->
+
+        <input type="button" data-bind="click: searchRv">Search</a>
+
+        <ul data-bind="foreach: tasks, visible: tasks().length > 0">
+            <li>
+                <input type="checkbox" data-bind="checked: isDone" />
+                <input data-bind="value: title, disable: isDone" />
+                <a href="#" data-bind="click: $parent.removeTask">Delete</a>
+            </li>
+        </ul>
+
+        <script type="text/javascript">
+
+            function AppViewModel() {
+                // this.firstName = ko.observable("Bert");
+                // this.lastName = ko.observable("Bertington");
+
+                this.searchRv = async function(){
+                    try {
+                        this.isLoadingData = true
+                        const response = await axios.get(`https://api.rvezy.com/api/rvlistings/unified-search?SearchLat=43.68595&SearchLng=-79.39741&Country=CA&SortOrder=Recommended&CurrentPage=${this.currentPage}&FeaturedCurrentPage=0&FeaturedPageSize=5&IncludeFeatured=true`);
+                        const FeaturedRVs = response?.data?.FeaturedRVs?.ListRVs
+                        const PopularRVs = response?.data?.PopularRVs?.ListRVs
+
+                        // const _filteredRVs = this.filterRVs(PopularRVs)
+                        // this.center = _filteredRVs.length > 0 ? { lat: _filteredRVs[0]?.Latitude, lng: _filteredRVs[0]?.Longitude } : { lat: -43.999792, lng: 170.463352 },
+                        // this.filteredRVs = _filteredRVs
+                        // this.featuredRVs = this.filterRVs(FeaturedRVs)
+
+                        console.log('response', response);
+                    } catch (error) {
+                        console.log(error);
+                    } finally
+                    {
+                        this.isLoadingData = false
+                    }
+                }
+            }
+            
+            // Activates knockout.js
+            ko.applyBindings(new AppViewModel());
+        </script>
+    </body>
+</html>
