@@ -45,15 +45,20 @@ script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDVHYFCCuN4E5kc29
 script.async = true;
 
 let map;
+
+window.map = map;
 // Attach your callback function to the `window` object
 window.initMap = async function() {
   //@ts-ignore
   const { Map } = await google.maps.importLibrary("maps");
 
-  map = new Map(document.getElementById("map"), {
+  window.map = new Map(document.getElementById("map"), {
     center: { lat: 49.283356, lng: -123.122115 },
     zoom: 12,
   });
+
+  window.map.addListener("dragend", window.viewmodel.searchRv);
+
 };
 
 // Append the 'script' element to 'head'
@@ -90,32 +95,67 @@ document.head.appendChild(script);
         // this.firstName = ko.observable("Bert");
         // this.lastName = ko.observable("Bertington");
 
+        this.dragEnd = function(event) {
+
+            //console.log('dragend', window.map.center.lat(), window.map.center.lng());
+            //console.log('map', window.map);
+            //document.getElementById('lat').value = event.latLng.lat();
+            //document.getElementById('lng').value = event.latLng.lng();
+
+            
+        }
+
+        window.viewmodel = this;
+
+
         this.featuredRVs = ko.observableArray([]);
+
+        this.markers = [];
 
         this.searchRv = async function(){
             try {
-                this.isLoadingData = true
-                const response = await axios.get(`https://api.rvezy.com/api/rvlistings/unified-search?swLat=49.278657566566835&swLng=-123.14434518428638&neLat=49.29366175327391&neLng=-123.10486306758716&SortOrder=Recommended&CurrentPage=0&FeaturedCurrentPage=0&FeaturedPageSize=5&IncludeFeatured=true`);
+                window.viewmodel.isLoadingData = true
+
+                //SearchLat=49.26432&SearchLng=-123.09607
+                const response = await axios.get(`https://api.rvezy.com/api/rvlistings/unified-search?SearchLat=${window.map.center.lat()}&SearchLng=${window.map.center.lng()}&SortOrder=Recommended&CurrentPage=0&FeaturedCurrentPage=0&FeaturedPageSize=5&IncludeFeatured=true`);
                 const FeaturedRVs = response?.data?.FeaturedRVs?.ListRVs
                 const PopularRVs = response?.data?.PopularRVs?.ListRVs
 
-                this.featuredRVs.removeAll();
+                window.viewmodel.featuredRVs.removeAll();
                 
+                window.viewmodel.markers.forEach(function(marker){
+                    try{
+                        marker.setMap(null);
+                    } catch {}
+                }, window.viewmodel);
+
+                //window.viewmodel.markers = [];
+
                 FeaturedRVs.forEach(function(rv){
                     //rv.RVName = ko.observable(rv.RVName);
                     rv.Photos[0].Path = rv.Photos[0].Path.replace('.jpg', '.webp');
 //p.replace('dog', 'monkey')
                     this.featuredRVs.push(rv);
 
+                    var myLatLng = { lat: rv.Latitude, lng: rv.Longitude };
 
-                }, this);
+                    var marker = {
+                        position: myLatLng,
+                        map: window.map,
+                        title: "Hello World!",
+                    };
+
+                    var m = new google.maps.Marker(marker);
+                    window.viewmodel.markers.push(m);
+
+                }, window.viewmodel);
                 
                 console.log('response', response);
             } catch (error) {
                 console.log(error);
             } finally
             {
-                this.isLoadingData = false
+                window.viewmodel.isLoadingData = false
             }
         }
     }
